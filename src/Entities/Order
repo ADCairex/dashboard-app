@@ -1,0 +1,61 @@
+{
+  "name": "Pedido",
+  "type": "object",
+  "properties": {
+    "cliente_nombre": {
+      "type": "string",
+      "description": "Nombre del cliente"
+    },
+    "cliente_direccion": {
+      "type": "string",
+      "description": "Direcci\u00f3n de entrega"
+    },
+    "cliente_telefono": {
+      "type": "string",
+      "description": "Tel\u00e9fono del cliente"
+    },
+    "items": {
+      "type": "array",
+      "description": "Lista de productos del pedido",
+      "items": {
+        "type": "object",
+        "properties": {
+          "producto_id": {
+            "type": "string"
+          },
+          "producto_nombre": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number"
+          },
+          "precio_unitario": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total": {
+      "type": "number",
+      "description": "Total del pedido"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "pendiente",
+        "en preparaci\u00f3n",
+        "en reparto",
+        "completado",
+        "cancelado"
+      ],
+      "default": "pendiente",
+      "description": "Estado actual del pedido"
+    }
+  },
+  "required": [
+    "cliente_nombre",
+    "items",
+    "total",
+    "estado"
+  ]
+}
