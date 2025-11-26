@@ -2,50 +2,24 @@ version: '3.8'
 
 services:
   app:
+    container_name: dashboard-chatbot-app-dev
     build:
       context: .
       dockerfile: Dockerfile
-    image: dashboard-chatbot-app:latest
-    container_name: dashboard-chatbot-app
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
+    image: dashboard-chatbot-app:dev
     environment:
-      NODE_ENV: production
-      DB_HOST: postgres
+      NODE_ENV: development
+      DB_HOST: postgres          # cámbialo si apuntas a otra BD
       DB_PORT: 5432
-      DB_DATABASE: dashboard_chatbot
+      DB_DATABASE: empresas_nopremium
       DB_USER: postgres
       DB_PASSWORD: tu_pass
       DB_SCHEMA: juanfran_asencio
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - network_public
+    ports:
+      - "3000:3000"              # o "8080:8080" según escuche tu app
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == worker
-        restart_policy:
-          condition: on-failure
-        labels:
-          - "traefik.enable=true"
-
-          # Interfaz principal de Dashboard APP
-          - "traefik.http.routers.dashboard-app.rule=Host(`test-whatsapp.aiflowlogic.com`)"
-          - "traefik.http.routers.dashboard-app.entrypoints=websecure"
-          - "traefik.http.routers.dashboard-app.tls.certresolver=letsencryptresolver"
-          - "traefik.http.routers.dashboard-app.service=dashboard-app-ui"
-          - "traefik.http.services.dashboard-app-ui.loadbalancer.server.port=8080"
-
-networks:
-  network_public:
-    external: true

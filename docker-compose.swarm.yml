@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    image: dashboard-chatbot-app:latest
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: empresas_nopremium
+      DB_USER: postgres
+      DB_PASSWORD: tu_pass
+      DB_SCHEMA: juanfran_asencio
+    networks:
+      - network_public
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+
+        # Interfaz principal de Dashboard APP
+        - "traefik.http.routers.dashboard-app.rule=Host(`test-whatsapp.aiflowlogic.com`)"
+        - "traefik.http.routers.dashboard-app.entrypoints=websecure"
+        - "traefik.http.routers.dashboard-app.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.dashboard-app.service=dashboard-app-ui"
+        - "traefik.http.services.dashboard-app-ui.loadbalancer.server.port=8080"
+
+networks:
+  network_public:
+    external: true
