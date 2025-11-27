@@ -1,4 +1,4 @@
-# Etapa 1: Build
+# Etapa 1: Build (Vite)
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -6,41 +6,37 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package.json package-lock.json* ./
 
-# Instalar dependencias
+# Instalar dependencias (incluye devDependencies para hacer el build)
 RUN npm ci
 
 # Copiar el código fuente
 COPY . .
 
-# Build de la aplicación
+# Build de la aplicación (Vite genera /dist)
 RUN npm run build
 
-# Etapa 2: Producción
+# Etapa 2: Producción (Express + estáticos de Vite)
 FROM node:18-alpine AS production
 
 WORKDIR /app
+
+# curl para healthchecks
+RUN apk add --no-cache curl
 
 # Copiar archivos de dependencias
 COPY package.json package-lock.json* ./
 
 # Instalar solo dependencias de producción
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copiar el build y archivos necesarios desde la etapa de build
+# Copiar el build y el servidor desde la etapa de build
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/server ./src/server
 
-# Exponer el puerto de la aplicación
+# Config genérica (sin credenciales)
+ENV NODE_ENV=production
+ENV PORT=3000
 EXPOSE 3000
 
-# Variables de entorno por defecto
-ENV NODE_ENV=production
-ENV DB_HOST=postgres
-ENV DB_PORT=5432
-ENV DB_DATABASE=dashboard_chatbot
-ENV DB_USER=postgres
-ENV DB_PASSWORD=postgres
-ENV DB_SCHEMA=public
-
-# Comando para iniciar la aplicación
+# Arrancar servidor Express (que debe escuchar en PORT y tener /health)
 CMD ["node", "src/server/api.js"]

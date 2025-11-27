@@ -11,12 +11,10 @@ export default defineConfig({
       configureServer: async (server) => {
         const app = express();
         app.use(express.json());
-        
-        // Importar y configurar las rutas API
+
         const { setupApiRoutes } = await import('./src/server/api.js');
         setupApiRoutes(app);
-        
-        // Usar el middleware de express antes de Vite
+
         server.middlewares.use((req, res, next) => {
           if (req.url && req.url.startsWith('/api')) {
             app(req, res);
@@ -32,16 +30,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.jsx?$/,
-    exclude: [],
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-      },
-    },
-  },
-})
+});
