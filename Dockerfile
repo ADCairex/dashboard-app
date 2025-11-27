@@ -35,8 +35,8 @@ COPY --from=builder /app/src/server ./src/server
 
 # Config genérica (sin credenciales)
 ENV NODE_ENV=production
-ENV PORT=3000
-EXPOSE 3000
+ENV PORT=8080
+EXPOSE 8080
 
 # Arrancar servidor Express (que debe escuchar en PORT y tener /health)
 CMD ["node", "src/server/api.js"]
