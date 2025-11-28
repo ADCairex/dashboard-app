@@ -17,12 +17,13 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  
+
   const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => apiClient.entities.Order.list('-created_date')
+    queryFn: () => apiClient.entities.Order.list('-created_date'),
+    refetchInterval: 300000 // 5 minutes
   });
 
   const updateStatusMutation = useMutation({
@@ -88,12 +89,12 @@ export default function Orders() {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.phone?.includes(searchTerm) ||
       order.id?.toString().includes(searchTerm.toLowerCase()) ||
       order.collection_place?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Filter by collected status
     let matchesStatus = true;
     if (statusFilter === 'collected') {
@@ -101,14 +102,14 @@ export default function Orders() {
     } else if (statusFilter === 'pending') {
       matchesStatus = order.collected === false;
     }
-    
+
     // Filter by date
     let matchesDate = true;
     if (dateFilter !== 'all' && order.date) {
       const orderDate = new Date(order.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (dateFilter === 'today') {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -127,7 +128,7 @@ export default function Orders() {
         matchesDate = orderDate >= thirtyDaysAgo;
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -239,8 +240,8 @@ export default function Orders() {
           <p className="text-slate-600">Cargando pedidos...</p>
         </div>
       ) : (
-        <OrdersTable 
-          orders={filteredOrders} 
+        <OrdersTable
+          orders={filteredOrders}
           onViewDetail={handleViewDetail}
           onUpdateStatus={handleUpdateStatus}
         />
