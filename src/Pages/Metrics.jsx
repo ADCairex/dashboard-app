@@ -1,14 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-// No date-fns, use native JS Date
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  Euro, 
-  Users, 
+import {
+  TrendingUp,
+  ShoppingBag,
+  Euro,
+  Users,
   Package,
   Trophy,
-  Calendar
+  Calendar,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
@@ -22,13 +23,15 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  AreaChart,
+  Area
 } from 'recharts';
 
 const COLORES = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function Metricas() {
-  // Fetch orders from our API
+  // Fetch orders
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
     queryKey: ['orders-metrics'],
     queryFn: async () => {
@@ -38,32 +41,30 @@ export default function Metricas() {
     }
   });
 
-  // Fetch products from our API
-  const { data: products = [], isLoading: loadingProducts } = useQuery({
-    queryKey: ['products-metrics'],
+  // Fetch product metrics (best sellers)
+  const { data: productMetrics, isLoading: loadingProductMetrics } = useQuery({
+    queryKey: ['product-metrics'],
     queryFn: async () => {
-      const res = await fetch('/api/products');
-      if (!res.ok) throw new Error('Failed to fetch products');
+      const res = await fetch('/api/metrics');
+      if (!res.ok) throw new Error('Failed to fetch metrics');
       return res.json();
     }
   });
 
-  const isLoading = loadingOrders || loadingProducts;
+  const isLoading = loadingOrders || loadingProductMetrics;
 
   // Calcular métricas
-  // Calculate metrics from orders and products
   const calculateMetrics = () => {
-  const today = new Date();
-  // Set to start of today
-  today.setHours(0, 0, 0, 0);
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(today.getDate() - 30);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
 
     // Orders by period
     const ordersToday = orders.filter(o => {
-      const date = new Date(o.created_date);
+      const date = new Date(o.date || o.created_date);
       return (
         date.getFullYear() === today.getFullYear() &&
         date.getMonth() === today.getMonth() &&
@@ -71,53 +72,44 @@ export default function Metricas() {
       );
     });
 
-  const orders7Days = orders.filter(o => new Date(o.created_date) >= sevenDaysAgo);
-  const orders30Days = orders.filter(o => new Date(o.created_date) >= thirtyDaysAgo);
+    const orders7Days = orders.filter(o => new Date(o.date || o.created_date) >= sevenDaysAgo);
+    const orders30Days = orders.filter(o => new Date(o.date || o.created_date) >= thirtyDaysAgo);
 
     // Revenue
     const revenueToday = ordersToday
-      .filter(o => o.status !== 'cancelled' && o.status !== 'cancelado')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter(o => !o.black_list)
+      .reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
 
     const revenue7Days = orders7Days
-      .filter(o => o.status !== 'cancelled' && o.status !== 'cancelado')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter(o => !o.black_list)
+      .reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
 
     const revenue30Days = orders30Days
-      .filter(o => o.status !== 'cancelled' && o.status !== 'cancelado')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter(o => !o.black_list)
+      .reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
 
     const revenueTotal = orders
-      .filter(o => o.status !== 'cancelled' && o.status !== 'cancelado')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      .filter(o => !o.black_list)
+      .reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
 
-    // Best selling products
-    const salesByProduct = {};
-    orders.filter(o => o.status !== 'cancelled' && o.status !== 'cancelado').forEach(order => {
-      order.items?.forEach(item => {
-        // Try both English and Spanish field names for compatibility
-        const name = item.product_name || item.producto_nombre || 'Sin nombre';
-        if (!salesByProduct[name]) {
-          salesByProduct[name] = { quantity: 0, revenue: 0 };
-        }
-        salesByProduct[name].quantity += item.quantity || item.cantidad || 0;
-        salesByProduct[name].revenue += (item.quantity || item.cantidad || 0) * (item.unit_price || item.precio_unitario || 0);
-      });
-    });
+    // Unique customers (by phone)
+    const uniqueCustomers = [...new Set(orders
+      .map(o => o.phone)
+      .filter(p => p) // Filter out null/undefined/empty strings
+    )];
 
-    const sortedProducts = Object.entries(salesByProduct)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.quantity - a.quantity);
+    // Orders by status (Collected vs Pending vs Blacklist)
+    const ordersByStatus = {
+      'Recogido': orders.filter(o => o.collected).length,
+      'Pendiente': orders.filter(o => !o.collected && !o.black_list).length,
+      'Lista Negra': orders.filter(o => o.black_list).length
+    };
 
-    // Unique customers
-    const uniqueCustomers = [...new Set(orders.map(o => o.customer_phone || o.cliente_telefono || o.customer_name || o.cliente_nombre))];
-
-    // Orders by status
-    const ordersByStatus = orders.reduce((acc, o) => {
-      const status = o.status || o.estado;
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+    // Collection Rate
+    const validOrders = orders.filter(o => !o.black_list).length;
+    const collectionRate = validOrders > 0
+      ? (orders.filter(o => o.collected).length / validOrders) * 100
+      : 0;
 
     // Sales per day (last 7 days)
     const salesByDay = [];
@@ -125,27 +117,40 @@ export default function Metricas() {
       const day = new Date(today);
       day.setDate(today.getDate() - i);
       const ordersDay = orders.filter(o => {
-        const date = new Date(o.created_date);
+        const date = new Date(o.date || o.created_date);
         return (
           date.getFullYear() === day.getFullYear() &&
           date.getMonth() === day.getMonth() &&
           date.getDate() === day.getDate() &&
-          o.status !== 'cancelled' && o.status !== 'cancelado'
+          !o.black_list
         );
       });
-      // Get short weekday in Spanish
+
       const weekday = day.toLocaleDateString('es-ES', { weekday: 'short' });
       salesByDay.push({
         day: weekday.charAt(0).toUpperCase() + weekday.slice(1),
         orders: ordersDay.length,
-        revenue: ordersDay.reduce((sum, o) => sum + (o.total || 0), 0)
+        revenue: ordersDay.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0)
       });
     }
 
+    // Peak Hours Analysis
+    const hoursDistribution = Array(24).fill(0);
+    orders.forEach(o => {
+      const date = new Date(o.date || o.created_date);
+      const hour = date.getHours();
+      hoursDistribution[hour]++;
+    });
+
+    const peakHoursData = hoursDistribution.map((count, hour) => ({
+      hour: `${hour}:00`,
+      orders: count
+    })).filter((_, i) => i >= 10 && i <= 23); // Show only from 10:00 to 23:00 usually
+
     // Average ticket
-    const completedOrders = orders.filter(o => (o.status !== 'cancelled' && o.status !== 'cancelado') && o.total > 0);
-    const averageTicket = completedOrders.length > 0 
-      ? revenueTotal / completedOrders.length 
+    const completedOrders = orders.filter(o => o.collected && parseFloat(o.total_price) > 0);
+    const averageTicket = completedOrders.length > 0
+      ? completedOrders.reduce((sum, o) => sum + parseFloat(o.total_price), 0) / completedOrders.length
       : 0;
 
     return {
@@ -157,12 +162,12 @@ export default function Metricas() {
       revenue7Days,
       revenue30Days,
       revenueTotal,
-      topProducts: sortedProducts.slice(0, 5),
-      bestProduct: sortedProducts[0],
       uniqueCustomers: uniqueCustomers.length,
       ordersByStatus,
       salesByDay,
-      averageTicket
+      averageTicket,
+      peakHoursData,
+      collectionRate
     };
   };
 
@@ -183,6 +188,10 @@ export default function Metricas() {
       </div>
     );
   }
+
+  // Use product metrics from API
+  const topProducts = productMetrics?.products?.slice(0, 5) || [];
+  const bestProduct = productMetrics?.bestSeller || null;
 
   return (
     <div className="space-y-8">
@@ -229,7 +238,7 @@ export default function Metricas() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{metrics.uniqueCustomers}</p>
-            <p className="text-sm text-purple-100 mt-1">{products.length} productos</p>
+            <p className="text-sm text-purple-100 mt-1">Fidelización</p>
           </CardContent>
         </Card>
 
@@ -242,13 +251,13 @@ export default function Metricas() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">€{metrics.averageTicket.toFixed(2)}</p>
-            <p className="text-sm text-amber-100 mt-1">Por pedido</p>
+            <p className="text-sm text-amber-100 mt-1">Por pedido completado</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Best product */}
-      {metrics.bestProduct && (
+      {bestProduct && (
         <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 border-amber-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
@@ -257,9 +266,9 @@ export default function Metricas() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-amber-700 font-medium">Producto Estrella</p>
-                <h3 className="text-2xl font-bold text-slate-900">{metrics.bestProduct.name}</h3>
+                <h3 className="text-2xl font-bold text-slate-900">{bestProduct.text}</h3>
                 <p className="text-slate-600 mt-1">
-                  {metrics.bestProduct.quantity} unidades vendidas · €{metrics.bestProduct.revenue.toFixed(2)} en ingresos
+                  {bestProduct.total_units} unidades vendidas · €{parseFloat(bestProduct.total_sold).toFixed(2)} en ingresos
                 </p>
               </div>
               <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-lg px-4 py-2">
@@ -270,7 +279,7 @@ export default function Metricas() {
         </Card>
       )}
 
-      {/* Charts */}
+      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales last 7 days */}
         <Card>
@@ -286,7 +295,7 @@ export default function Metricas() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value, name) => [
                     name === 'revenue' ? `€${value.toFixed(2)}` : value,
                     name === 'revenue' ? 'Ingresos' : 'Pedidos'
@@ -298,12 +307,36 @@ export default function Metricas() {
           </CardContent>
         </Card>
 
-        {/* Orders by status */}
+        {/* Peak Hours */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-slate-600" />
+              Horas Pico (10:00 - 23:00)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={metrics.peakHoursData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="orders" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Orders by status */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-slate-600" />
-              Pedidos por Estado
+              Estado de Pedidos
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -326,62 +359,79 @@ export default function Metricas() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="flex justify-center gap-4 mt-4">
+              {statusData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORES[index % COLORES.length] }} />
+                  <span className="text-xs text-slate-600">{entry.name} ({entry.value})</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top products */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-slate-600" />
+              Top 5 Productos Más Vendidos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProducts.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No hay datos de ventas aún</p>
+            ) : (
+              <div className="space-y-4">
+                {topProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                  >
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white text-sm ${index === 0 ? 'bg-amber-500' :
+                        index === 1 ? 'bg-slate-400' :
+                          index === 2 ? 'bg-amber-700' : 'bg-slate-300'
+                      }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-slate-900">{product.text}</h4>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
+                        <div
+                          className="bg-blue-600 h-1.5 rounded-full"
+                          style={{ width: `${(product.total_units / topProducts[0].total_units) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right min-w-[100px]">
+                      <p className="font-bold text-slate-900">{product.total_units} uds</p>
+                      <p className="text-xs text-slate-500">€{parseFloat(product.total_sold).toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Top products */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-slate-600" />
-            Productos Más Vendidos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {metrics.topProducts.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">No hay datos de ventas aún</p>
-          ) : (
-            <div className="space-y-4">
-              {metrics.topProducts.map((product, index) => (
-                <div 
-                  key={product.name} 
-                  className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl"
-                >
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white ${
-                    index === 0 ? 'bg-amber-500' :
-                    index === 1 ? 'bg-slate-400' :
-                    index === 2 ? 'bg-amber-700' : 'bg-slate-300'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-slate-900">{product.name}</h4>
-                    <p className="text-sm text-slate-500">{product.quantity} unidades vendidas</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-blue-600">€{product.revenue.toFixed(2)}</p>
-                    <p className="text-xs text-slate-500">ingresos</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Period summary */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-slate-500 mb-2">Últimos 7 días</p>
-            <p className="text-2xl font-bold text-slate-900">€{metrics.revenue7Days.toFixed(2)}</p>
-            <p className="text-sm text-slate-600 mt-1">{metrics.orders7Days} pedidos</p>
+          <CardContent className="p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500 mb-1">Tasa de Recogida</p>
+              <p className="text-2xl font-bold text-slate-900">{metrics.collectionRate.toFixed(1)}%</p>
+            </div>
+            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${metrics.collectionRate >= 90 ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
+              }`}>
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <p className="text-sm text-slate-500 mb-2">Últimos 30 días</p>
+            <p className="text-sm text-slate-500 mb-2">Ingresos (30 días)</p>
             <p className="text-2xl font-bold text-slate-900">€{metrics.revenue30Days.toFixed(2)}</p>
             <p className="text-sm text-slate-600 mt-1">{metrics.orders30Days} pedidos</p>
           </CardContent>

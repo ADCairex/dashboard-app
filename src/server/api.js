@@ -229,12 +229,20 @@ export function setupApiRoutes(app) {
       const orderId = maxIdResult.rows[0].next_id;
       // Calculate order total
       const total_price = items.reduce((sum, item) => sum + (parseFloat(item.unit_price) * parseInt(item.amount)), 0);
+      // Check if phone is in blacklist history
+      const blacklistCheck = await client.query(
+        `SELECT 1 FROM ${schema}.orders WHERE phone = $1 AND black_list = true LIMIT 1`,
+        [phone]
+      );
+      const isBlacklisted = blacklistCheck.rows.length > 0;
+      const finalBlackListStatus = isBlacklisted || black_list || false;
+
       // Insert order
       const orderResult = await client.query(
         `INSERT INTO ${schema}.orders (id, name, phone, collected, black_list, date, total_price, collection_place, observations)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, name, phone, collected, black_list, date, total_price, collection_place, observations`,
-        [orderId, name, phone, collected || false, black_list || false, date || new Date(), total_price, collection_place, observations]
+        [orderId, name, phone, collected || false, finalBlackListStatus, date || new Date(), total_price, collection_place, observations]
       );
       // Insert order products
       if (items && items.length > 0) {
@@ -319,8 +327,18 @@ export function setupApiRoutes(app) {
           await client.query('ROLLBACK');
           return res.status(404).json({ error: 'Order not found' });
         }
+
+        // Sync blacklist status to other orders with same phone
+        const updatedOrder = orderResult.rows[0];
+        if (updatedOrder.phone) {
+          await client.query(
+            `UPDATE ${schema}.orders SET black_list = $1 WHERE phone = $2 AND id != $3`,
+            [updatedOrder.black_list, updatedOrder.phone, updatedOrder.id]
+          );
+        }
+
         await client.query('COMMIT');
-        return res.json(orderResult.rows[0]);
+        return res.json(updatedOrder);
       }
       // Full update with items
       const total_price = items.reduce((sum, item) => sum + (parseFloat(item.unit_price) * parseInt(item.amount)), 0);
@@ -359,8 +377,17 @@ export function setupApiRoutes(app) {
           );
         }
       }
+      // Sync blacklist status to other orders with same phone
+      const updatedOrder = orderResult.rows[0];
+      if (updatedOrder.phone) {
+        await client.query(
+          `UPDATE ${schema}.orders SET black_list = $1 WHERE phone = $2 AND id != $3`,
+          [updatedOrder.black_list, updatedOrder.phone, updatedOrder.id]
+        );
+      }
+
       await client.query('COMMIT');
-      res.json(orderResult.rows[0]);
+      res.json(updatedOrder);
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error updating order:', error);
