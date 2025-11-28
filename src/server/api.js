@@ -24,63 +24,77 @@ const schema = process.env.DB_SCHEMA || 'public';
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('❌ Error al conectar a PostgreSQL:', err);
+    console.error('❌ Error connecting to PostgreSQL:', err);
   } else {
-    console.log('✅ Conexión exitosa a PostgreSQL');
-    console.log(`📂 Schema configurado: ${schema}`);
+    console.log('✅ Connected to PostgreSQL');
+    console.log(`📂 Schema: ${schema}`);
   }
 });
 
-// Configurar rutas API
+// API routes setup
 export function setupApiRoutes(app) {
-  // ==================== LOGIN ====================
+  // ========== LOGIN ========== 
   app.post('/api/login', async (req, res) => {
-    // Puedes cambiar esto por variables de entorno si lo prefieres
+    // You can change this to use environment variables if you prefer
     const USER = process.env.ADMIN_USER || 'admin';
     const PASS = process.env.ADMIN_PASSWORD || 'admin123';
     const { username, password } = req.body;
     if (username === USER && password === PASS) {
-      // Puedes devolver un token simple, o solo un ok
       return res.json({ success: true });
     } else {
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
   });
+
   app.use(cors());
   app.use(express.json());
 
-
-  // ==================== HEALTH CHECK ====================
-  // Ruta de healthcheck simple (sin /api) para Docker
+  // ========== HEALTH CHECK ========== 
+  // Simple healthcheck route (for Docker)
   app.get('/health', async (req, res) => {
     try {
       await pool.query('SELECT 1');
-      res.status(200).json({ 
-        status: 'ok', 
+      res.status(200).json({
+        status: 'ok',
         database: 'connected',
         schema: schema,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      res.status(503).json({ 
-        status: 'error', 
+      res.status(503).json({
+        status: 'error',
         database: 'disconnected',
-        error: error.message 
+        error: error.message
       });
     }
   });
 
-
-  // ==================== PRODUCTOS ====================
+  // ========== PRODUCTS ========== 
   app.get('/api/products', async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT id, text, metadata FROM ${schema}.products`
-      );
-      res.json(result.rows);
+      const { order_id } = req.query;
+
+      // If order_id is provided, get products from order_products table with JOIN
+      if (order_id) {
+        const result = await pool.query(
+          `SELECT op.id, op.order_id, op.product_id, op.amount, op.unit_price, op.line_total,
+                  p.id, p.text, p.metadata
+           FROM ${schema}.order_products op
+           LEFT JOIN ${schema}.products p ON op.product_id = p.id
+           WHERE op.order_id = $1`,
+          [order_id]
+        );
+        res.json(result.rows);
+      } else {
+        // Otherwise, get all products
+        const result = await pool.query(
+          `SELECT id, text, metadata FROM ${schema}.products`
+        );
+        res.json(result.rows);
+      }
     } catch (error) {
-      console.error('Error al obtener productos:', error);
-      res.status(500).json({ error: 'Error al obtener productos' });
+      console.error('Error getting products:', error);
+      res.status(500).json({ error: 'Error getting products' });
     }
   });
 
@@ -88,16 +102,16 @@ export function setupApiRoutes(app) {
     try {
       const { id } = req.params;
       const result = await pool.query(
-        `SELECT id, text, metadata FROM ${schema}.products WHERE id = $1`, 
+        `SELECT id, text, metadata FROM ${schema}.products WHERE id = $1`,
         [id]
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
+        return res.status(404).json({ error: 'Product not found' });
       }
       res.json(result.rows[0]);
     } catch (error) {
-      console.error('Error al obtener producto:', error);
-      res.status(500).json({ error: 'Error al obtener producto' });
+      console.error('Error getting product:', error);
+      res.status(500).json({ error: 'Error getting product' });
     }
   });
 
@@ -114,8 +128,8 @@ export function setupApiRoutes(app) {
       );
       res.status(201).json(result.rows[0]);
     } catch (error) {
-      console.error('Error al crear producto:', error);
-      res.status(500).json({ error: 'Error al crear producto' });
+      console.error('Error creating product:', error);
+      res.status(500).json({ error: 'Error creating product' });
     }
   });
 
@@ -131,12 +145,12 @@ export function setupApiRoutes(app) {
         [text, JSON.stringify(metadata), id]
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
+        return res.status(404).json({ error: 'Product not found' });
       }
       res.json(result.rows[0]);
     } catch (error) {
-      console.error('Error al actualizar producto:', error);
-      res.status(500).json({ error: 'Error al actualizar producto' });
+      console.error('Error updating product:', error);
+      res.status(500).json({ error: 'Error updating product' });
     }
   });
 
@@ -144,20 +158,20 @@ export function setupApiRoutes(app) {
     try {
       const { id } = req.params;
       const result = await pool.query(
-        `DELETE FROM ${schema}.products WHERE id = $1 RETURNING id`, 
+        `DELETE FROM ${schema}.products WHERE id = $1 RETURNING id`,
         [id]
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
+        return res.status(404).json({ error: 'Product not found' });
       }
       res.json({ success: true });
     } catch (error) {
-      console.error('Error al eliminar producto:', error);
-      res.status(500).json({ error: 'Error al eliminar producto' });
+      console.error('Error deleting product:', error);
+      res.status(500).json({ error: 'Error deleting product' });
     }
   });
 
-  // ==================== PEDIDOS ====================
+  // ========== ORDERS ========== 
   app.get('/api/orders', async (req, res) => {
     try {
       const result = await pool.query(
@@ -167,25 +181,25 @@ export function setupApiRoutes(app) {
       );
       res.json(result.rows);
     } catch (error) {
-      console.error('Error al obtener pedidos:', error);
-      res.status(500).json({ error: 'Error al obtener pedidos' });
+      console.error('Error getting orders:', error);
+      res.status(500).json({ error: 'Error getting orders' });
     }
   });
 
   app.get('/api/orders/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      // Obtener el pedido
+      // Get order
       const orderResult = await pool.query(
         `SELECT id, name, phone, collected, black_list, date, total_price, collection_place, observations 
          FROM ${schema}.orders 
-         WHERE id = $1`, 
+         WHERE id = $1`,
         [id]
       );
       if (orderResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Pedido no encontrado' });
+        return res.status(404).json({ error: 'Order not found' });
       }
-      // Obtener los productos del pedido
+      // Get order products
       const productsResult = await pool.query(
         `SELECT op.id, op.order_id, op.product_id, op.amount, op.unit_price, op.line_total,
                 p.text as product_text, p.metadata as product_metadata
@@ -198,8 +212,8 @@ export function setupApiRoutes(app) {
       order.items = productsResult.rows;
       res.json(order);
     } catch (error) {
-      console.error('Error al obtener pedido:', error);
-      res.status(500).json({ error: 'Error al obtener pedido' });
+      console.error('Error getting order:', error);
+      res.status(500).json({ error: 'Error getting order' });
     }
   });
 
@@ -208,26 +222,26 @@ export function setupApiRoutes(app) {
     try {
       await client.query('BEGIN');
       const { name, phone, collected, black_list, date, collection_place, observations, items } = req.body;
-      // Obtener el siguiente ID disponible
+      // Get next available ID
       const maxIdResult = await client.query(
         `SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM ${schema}.orders`
       );
       const orderId = maxIdResult.rows[0].next_id;
-      // Calcular el total del pedido
+      // Calculate order total
       const total_price = items.reduce((sum, item) => sum + (parseFloat(item.unit_price) * parseInt(item.amount)), 0);
-      // Insertar el pedido
+      // Insert order
       const orderResult = await client.query(
         `INSERT INTO ${schema}.orders (id, name, phone, collected, black_list, date, total_price, collection_place, observations)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, name, phone, collected, black_list, date, total_price, collection_place, observations`,
         [orderId, name, phone, collected || false, black_list || false, date || new Date(), total_price, collection_place, observations]
       );
-      // Insertar los productos del pedido
+      // Insert order products
       if (items && items.length > 0) {
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const line_total = parseFloat(item.unit_price) * parseInt(item.amount);
-          // Obtener el siguiente ID para order_products
+          // Get next ID for order_products
           const maxProductIdResult = await client.query(
             `SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM ${schema}.order_products`
           );
@@ -243,8 +257,8 @@ export function setupApiRoutes(app) {
       res.status(201).json(orderResult.rows[0]);
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error al crear pedido:', error);
-      res.status(500).json({ error: 'Error al crear pedido' });
+      console.error('Error creating order:', error);
+      res.status(500).json({ error: 'Error creating order' });
     } finally {
       client.release();
     }
@@ -256,7 +270,7 @@ export function setupApiRoutes(app) {
       await client.query('BEGIN');
       const { id } = req.params;
       const { name, phone, collected, black_list, date, collection_place, observations, items } = req.body;
-      // Si no hay items, es una actualización parcial (solo estado)
+      // If no items, it's a partial update (just status)
       if (!items) {
         const fields = [];
         const values = [];
@@ -303,14 +317,14 @@ export function setupApiRoutes(app) {
         );
         if (orderResult.rows.length === 0) {
           await client.query('ROLLBACK');
-          return res.status(404).json({ error: 'Pedido no encontrado' });
+          return res.status(404).json({ error: 'Order not found' });
         }
         await client.query('COMMIT');
         return res.json(orderResult.rows[0]);
       }
-      // Actualización completa con items
+      // Full update with items
       const total_price = items.reduce((sum, item) => sum + (parseFloat(item.unit_price) * parseInt(item.amount)), 0);
-      // Actualizar el pedido
+      // Update order
       const orderResult = await client.query(
         `UPDATE ${schema}.orders 
          SET name = $1, phone = $2, collected = $3, black_list = $4, date = $5, 
@@ -321,19 +335,19 @@ export function setupApiRoutes(app) {
       );
       if (orderResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Pedido no encontrado' });
+        return res.status(404).json({ error: 'Order not found' });
       }
-      // Eliminar los productos antiguos del pedido
+      // Delete old order products
       await client.query(
         `DELETE FROM ${schema}.order_products WHERE order_id = $1`,
         [id]
       );
-      // Insertar los nuevos productos del pedido
+      // Insert new order products
       if (items && items.length > 0) {
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const line_total = parseFloat(item.unit_price) * parseInt(item.amount);
-          // Obtener el siguiente ID para order_products
+          // Get next ID for order_products
           const maxProductIdResult = await client.query(
             `SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM ${schema}.order_products`
           );
@@ -349,8 +363,8 @@ export function setupApiRoutes(app) {
       res.json(orderResult.rows[0]);
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error al actualizar pedido:', error);
-      res.status(500).json({ error: 'Error al actualizar pedido' });
+      console.error('Error updating order:', error);
+      res.status(500).json({ error: 'Error updating order' });
     } finally {
       client.release();
     }
@@ -361,33 +375,58 @@ export function setupApiRoutes(app) {
     try {
       await client.query('BEGIN');
       const { id } = req.params;
-      // Eliminar los productos del pedido primero
+      // Delete order products first
       await client.query(
         `DELETE FROM ${schema}.order_products WHERE order_id = $1`,
         [id]
       );
-      // Eliminar el pedido
+      // Delete order
       const result = await client.query(
-        `DELETE FROM ${schema}.orders WHERE id = $1 RETURNING id`, 
+        `DELETE FROM ${schema}.orders WHERE id = $1 RETURNING id`,
         [id]
       );
       if (result.rows.length === 0) {
         await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Pedido no encontrado' });
+        return res.status(404).json({ error: 'Order not found' });
       }
       await client.query('COMMIT');
       res.json({ success: true });
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error al eliminar pedido:', error);
-      res.status(500).json({ error: 'Error al eliminar pedido' });
+      console.error('Error deleting order:', error);
+      res.status(500).json({ error: 'Error deleting order' });
     } finally {
       client.release();
     }
   });
 
-  // --------- FIN RUTAS API ---------
-  console.log('✅ Rutas API configuradas en /api/*');
+  // ========== METRICS ========== 
+  app.get('/api/metrics', async (req, res) => {
+    try {
+      // Total sold per product
+      const salesByProduct = await pool.query(
+        `SELECT p.id, p.text, SUM(op.amount) as total_units, SUM(op.line_total) as total_sold
+         FROM ${schema}.order_products op
+         LEFT JOIN ${schema}.products p ON op.product_id = p.id
+         GROUP BY p.id, p.text
+         ORDER BY total_sold DESC`
+      );
+
+      // Best selling product (by units)
+      const bestSeller = salesByProduct.rows.length > 0 ? salesByProduct.rows[0] : null;
+
+      res.json({
+        products: salesByProduct.rows,
+        bestSeller
+      });
+    } catch (error) {
+      console.error('Error getting metrics:', error);
+      res.status(500).json({ error: 'Error getting metrics' });
+    }
+  });
+
+  // --------- END API ROUTES ---------
+  console.log('✅ API routes configured at /api/*');
 }
 
 // Si se ejecuta como "node src/server/api.js", levantamos servidor propio

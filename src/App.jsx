@@ -6,6 +6,7 @@ import Layout from './Layout';
 import Orders from './Pages/Orders';
 import Products from './Pages/Products';
 import Login from './Pages/Login';
+import Metrics from './Pages/Metrics';
 
 
 const queryClient = new QueryClient({
@@ -76,6 +77,14 @@ function ProtectedRoutes() {
         element={
           <Layout currentPageName="Products">
             <Products />
+          </Layout>
+        }
+      />
+      <Route
+        path="/metrics"
+        element={
+          <Layout currentPageName="Métricas">
+            <Metrics />
           </Layout>
         }
       />

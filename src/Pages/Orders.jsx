@@ -57,6 +57,7 @@ export default function Orders() {
   });
 
   const handleViewDetail = (order) => {
+    console.log(order);
     setSelectedOrder(order);
     setIsDetailModalOpen(true);
   };

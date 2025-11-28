@@ -9,7 +9,8 @@ export default function Layout({ children, currentPageName }) {
 
   const navItems = [
     { name: 'Pedidos', path: 'Orders', icon: ShoppingBag },
-    { name: 'Productos', path: 'Products', icon: Package }
+    { name: 'Productos', path: 'Products', icon: Package },
+    { name: 'Métricas', path: 'Metrics', icon: Store },
   ];
 
   return (

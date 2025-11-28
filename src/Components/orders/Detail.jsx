@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -11,8 +11,31 @@ import { Button } from "@/Components/ui/button.jsx";
 import { Badge } from "@/Components/ui/badge.jsx";
 import { User, MapPin, Phone, Calendar, Package, Pencil, Trash2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/api/apiClient";
 
 export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }) {
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && order?.id) {
+      fetchProducts();
+    }
+  }, [isOpen, order?.id]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await apiClient.entities.Product.filter({ order_id: order.id });
+      setProducts(response || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
   if (!order) return null;
 
   return (
@@ -53,7 +76,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
           {/* Información del cliente */}
           <div className="bg-slate-50 rounded-xl p-5 space-y-3">
             <h3 className="font-semibold text-slate-900 mb-4">Customer Information</h3>
-            
+
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center">
                 <User className="h-4 w-4 text-slate-600" />
@@ -112,8 +135,8 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
 
             <div className="flex gap-4 pt-2">
               <Badge className={cn(
-                order.collected 
-                  ? "bg-green-100 text-green-800 border-green-200" 
+                order.collected
+                  ? "bg-green-100 text-green-800 border-green-200"
                   : "bg-amber-100 text-amber-800 border-amber-200",
                 "border flex items-center gap-1.5"
               )}>
@@ -143,23 +166,28 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
           <div>
             <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <Package className="h-5 w-5 text-slate-600" />
-              Products
+              Productos
             </h3>
             <div className="space-y-3">
-              {order.items && order.items.length > 0 ? (
-                order.items.map((item, index) => {
-                  const metadata = item.product_metadata && typeof item.product_metadata === 'string' 
-                    ? JSON.parse(item.product_metadata) 
-                    : item.product_metadata || {};
-                  
+              {loadingProducts ? (
+                <p className="text-sm text-slate-500 text-center py-4">Cargando productos...</p>
+              ) : products && products.length > 0 ? (
+                products.map((item, index) => {
+                  const metadata = item.metadata || {};
+
                   return (
-                    <div key={index} className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center">
+                    <div key={item.id || index} className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center">
                       <div>
                         <p className="font-medium text-slate-900">
-                          {metadata.titulo || item.product_text || 'Product'}
+                          {metadata.titulo || item.text || 'Producto'}
                         </p>
+                        {metadata.descripcion && (
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {metadata.descripcion}
+                          </p>
+                        )}
                         <p className="text-sm text-slate-500 mt-1">
-                          Amount: {item.amount} × €{parseFloat(item.unit_price || 0).toFixed(2)}
+                          Cantidad: {item.amount} × €{parseFloat(item.unit_price || 0).toFixed(2)}
                         </p>
                       </div>
                       <p className="font-semibold text-slate-900">
@@ -169,7 +197,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                   );
                 })
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">No products in this order</p>
+                <p className="text-sm text-slate-500 text-center py-4">No hay productos en este pedido</p>
               )}
             </div>
 

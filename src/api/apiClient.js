@@ -30,6 +30,20 @@ class APIClient {
     }
   }
 
+  async filter(params = {}) {
+    try {
+      const queryString = new URLSearchParams(params).toString();
+      const response = await fetch(`/api${this.endpoint}?${queryString}`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error al filtrar ${this.endpoint}:`, error);
+      throw error;
+    }
+  }
+
   async create(data) {
     try {
       const response = await fetch(`/api${this.endpoint}`, {
