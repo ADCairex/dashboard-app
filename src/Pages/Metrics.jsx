@@ -11,8 +11,8 @@ import {
   Clock,
   CheckCircle2
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
-import { Badge } from "@/components/ui/badge.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card.jsx";
+import { Badge } from "@/Components/ui/badge.jsx";
 import {
   BarChart,
   Bar,
