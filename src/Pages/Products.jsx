@@ -87,24 +87,24 @@ export default function Products() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Product Catalog</h1>
-          <p className="text-slate-600">Manage your products</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Catálogo de Productos</h1>
+          <p className="text-slate-600">Gestiona tus productos</p>
         </div>
         <Button
           onClick={handleNew}
           className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
         >
           <Plus className="h-5 w-5 mr-2" />
-          New Product
+          Nuevo Producto
         </Button>
       </div>
 
       {/* Statistics */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white shadow-lg">
-        <p className="text-blue-100 mb-1">Total Products</p>
+        <p className="text-blue-100 mb-1">Total de Productos</p>
         <p className="text-4xl font-bold">{products.length}</p>
         <p className="text-sm text-blue-100 mt-2">
-          {products.length === 1 ? 'product in your catalog' : 'products in your catalog'}
+          {products.length === 1 ? 'producto en tu catálogo' : 'productos en tu catálogo'}
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default function Products() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Search products by name, description or category..."
+                placeholder="Buscar productos por nombre, descripción o categoría..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

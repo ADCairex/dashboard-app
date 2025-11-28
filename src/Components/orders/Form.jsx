@@ -136,7 +136,7 @@ export default function OrderForm({ order, isOpen, onClose, onSave }) {
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Customer name"
+                placeholder="Nombre del cliente"
                 required
                 className="mt-2"
               />
@@ -164,7 +164,7 @@ export default function OrderForm({ order, isOpen, onClose, onSave }) {
                 id="collection_place"
                 value={formData.collection_place}
                 onChange={(e) => handleChange('collection_place', e.target.value)}
-                placeholder="Collection address"
+                placeholder="Lugar de recogida"
                 className="mt-2"
               />
             </div>
@@ -190,7 +190,7 @@ export default function OrderForm({ order, isOpen, onClose, onSave }) {
                 id="observations"
                 value={formData.observations}
                 onChange={(e) => handleChange('observations', e.target.value)}
-                placeholder="Additional notes"
+                placeholder="Observaciones adicionales"
                 className="mt-2"
               />
             </div>

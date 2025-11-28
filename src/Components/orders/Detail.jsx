@@ -45,7 +45,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl font-bold text-slate-900">
-                Order Detail
+                Detalles del pedido
               </DialogTitle>
               <p className="text-sm text-slate-500 font-mono">#{order.id}</p>
             </div>
@@ -75,14 +75,14 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
         <div className="space-y-6 mt-6">
           {/* Información del cliente */}
           <div className="bg-slate-50 rounded-xl p-5 space-y-3">
-            <h3 className="font-semibold text-slate-900 mb-4">Customer Information</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">Información del cliente</h3>
 
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center">
                 <User className="h-4 w-4 text-slate-600" />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Name</p>
+                <p className="text-xs text-slate-500">Nombre</p>
                 <p className="text-sm font-medium text-slate-900">{order.name}</p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                 <Phone className="h-4 w-4 text-slate-600" />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Phone</p>
+                <p className="text-xs text-slate-500">Teléfono</p>
                 <p className="text-sm font-medium text-slate-900">{order.phone}</p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                   <MapPin className="h-4 w-4 text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Collection Place</p>
+                  <p className="text-xs text-slate-500">Lugar de recogida</p>
                   <p className="text-sm font-medium text-slate-900">{order.collection_place}</p>
                 </div>
               </div>
@@ -114,7 +114,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                 <Calendar className="h-4 w-4 text-slate-600" />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Order Date</p>
+                <p className="text-xs text-slate-500">Fecha del pedido</p>
                 <p className="text-sm font-medium text-slate-900">
                   {order.date ? format(new Date(order.date), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es }) : '-'}
                 </p>
@@ -127,7 +127,7 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                   <Package className="h-4 w-4 text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Observations</p>
+                  <p className="text-xs text-slate-500">Observaciones</p>
                   <p className="text-sm font-medium text-slate-900">{order.observations}</p>
                 </div>
               </div>
@@ -143,12 +143,12 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                 {order.collected ? (
                   <>
                     <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    Collected
+                    Recogido
                   </>
                 ) : (
                   <>
                     <Clock className="h-3.5 w-3.5 text-amber-600" />
-                    Not Collected
+                    No Recogido
                   </>
                 )}
               </Badge>

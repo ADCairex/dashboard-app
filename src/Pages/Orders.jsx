@@ -143,34 +143,34 @@ export default function Orders() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Order Management</h1>
-          <p className="text-slate-600">Manage all your customer orders</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Gestión de pedidos</h1>
+          <p className="text-slate-600">Gestiona todos tus pedidos</p>
         </div>
         <Button
           onClick={handleNewOrder}
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4 mr-2" />
-          New Order
+          Nuevo pedido
         </Button>
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-sm text-slate-600 mb-1">Total Orders</p>
+          <p className="text-sm text-slate-600 mb-1">Total de pedidos</p>
           <p className="text-3xl font-bold text-slate-900">{statistics.total}</p>
         </div>
         <div className="bg-amber-50 rounded-xl border border-amber-200 p-6 shadow-sm">
-          <p className="text-sm text-amber-700 mb-1">Pending</p>
+          <p className="text-sm text-amber-700 mb-1">Pendientes</p>
           <p className="text-3xl font-bold text-amber-900">{statistics.pending}</p>
         </div>
         <div className="bg-green-50 rounded-xl border border-green-200 p-6 shadow-sm">
-          <p className="text-sm text-green-700 mb-1">Collected</p>
+          <p className="text-sm text-green-700 mb-1">Recogidos</p>
           <p className="text-3xl font-bold text-green-900">{statistics.collected}</p>
         </div>
         <div className="bg-red-50 rounded-xl border border-red-200 p-6 shadow-sm">
-          <p className="text-sm text-red-700 mb-1">Black List</p>
+          <p className="text-sm text-red-700 mb-1">Lista negra</p>
           <p className="text-3xl font-bold text-red-900">{statistics.blackList}</p>
         </div>
       </div>
@@ -182,7 +182,7 @@ export default function Orders() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Search by customer, phone or location..."
+                placeholder="Buscar por cliente, teléfono o ubicación..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -236,7 +236,7 @@ export default function Orders() {
       {isLoading ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <RefreshCw className="h-8 w-8 text-slate-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">Loading orders...</p>
+          <p className="text-slate-600">Cargando pedidos...</p>
         </div>
       ) : (
         <OrdersTable 
