@@ -33,6 +33,19 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Configurar rutas API
 export function setupApiRoutes(app) {
+  // ==================== LOGIN ====================
+  app.post('/api/login', async (req, res) => {
+    // Puedes cambiar esto por variables de entorno si lo prefieres
+    const USER = process.env.ADMIN_USER || 'admin';
+    const PASS = process.env.ADMIN_PASSWORD || 'admin123';
+    const { username, password } = req.body;
+    if (username === USER && password === PASS) {
+      // Puedes devolver un token simple, o solo un ok
+      return res.json({ success: true });
+    } else {
+      return res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
+    }
+  });
   app.use(cors());
   app.use(express.json());
 

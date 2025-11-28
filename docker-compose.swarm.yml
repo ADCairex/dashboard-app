@@ -17,6 +17,9 @@ services:
       DB_SCHEMA: juanfran_asencio
       DB_PASSWORD: dummy_value
 
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: dummy_value
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
