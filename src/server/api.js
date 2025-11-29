@@ -33,6 +33,9 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // API routes setup
 export function setupApiRoutes(app) {
+  app.use(cors());
+  app.use(express.json());
+
   // ========== LOGIN ========== 
   app.post('/api/login', async (req, res) => {
     // You can change this to use environment variables if you prefer
@@ -45,9 +48,6 @@ export function setupApiRoutes(app) {
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
   });
-
-  app.use(cors());
-  app.use(express.json());
 
   // ========== HEALTH CHECK ========== 
   // Simple healthcheck route (for Docker)
