@@ -45,56 +45,18 @@ class APIClient {
   }
 
   async create(data) {
-    try {
-      const response = await fetch(`/api${this.endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error al crear ${this.endpoint}:`, error);
-      throw error;
-    }
+    // Método deshabilitado para productos
+    throw new Error('Creating products is disabled');
   }
 
   async update(id, data) {
-    try {
-      const response = await fetch(`/api${this.endpoint}/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error al actualizar ${this.endpoint}/${id}:`, error);
-      throw error;
-    }
+    // Método deshabilitado para productos
+    throw new Error('Updating products is disabled');
   }
 
   async delete(id) {
-    try {
-      const response = await fetch(`/api${this.endpoint}/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error al eliminar ${this.endpoint}/${id}:`, error);
-      throw error;
-    }
+    // Método deshabilitado para productos
+    throw new Error('Deleting products is disabled');
   }
 }
 

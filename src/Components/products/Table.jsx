@@ -30,10 +30,10 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
           >
             {/* Imagen */}
             <div className="relative h-48 bg-slate-100 overflow-hidden">
-              {metadata.imagen_url ? (
+              {metadata.Multimedia && metadata.Multimedia.length > 0 && metadata.Multimedia[0].signedPath ? (
                 <img
-                  src={metadata.imagen_url}
-                  alt={metadata.titulo || product.text}
+                  src={metadata.Multimedia[0].signedPath}
+                  alt={metadata.Name || product.text}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
@@ -41,9 +41,9 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
                   <Package className="h-16 w-16 text-slate-300" />
                 </div>
               )}
-              {metadata.categoria && (
-                <Badge className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-slate-700 border-0 shadow-sm">
-                  {metadata.categoria}
+              {metadata.Multimedia && metadata.Multimedia.length > 1 && (
+                <Badge className="absolute top-3 right-3 bg-blue-600/90 backdrop-blur-sm text-white border-0 shadow-sm">
+                  +{metadata.Multimedia.length - 1}
                 </Badge>
               )}
             </div>
@@ -51,35 +51,41 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
             {/* Contenido */}
             <div className="p-5">
               <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-1">
-                {metadata.titulo || product.text}
+                {metadata.Name || product.text}
               </h3>
               <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[2.5rem]">
-                {metadata.descripcion || product.text || 'Sin descripción'}
+                {metadata.Description || product.text || 'Sin descripción'}
               </p>
               
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold text-blue-600">
-                  €{parseFloat(metadata.precio || 0).toFixed(2)}
+                  €{parseFloat(metadata.Price || 0).toFixed(2)}
                 </span>
                 
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onEdit(product)}
-                    className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete(product.id)}
-                    className="text-slate-600 hover:text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                {(onEdit || onDelete) && (
+                  <div className="flex items-center gap-2">
+                    {onEdit && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onEdit(product)}
+                        className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {onDelete && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onDelete(product.id)}
+                        className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

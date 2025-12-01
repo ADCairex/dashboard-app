@@ -116,59 +116,18 @@ export function setupApiRoutes(app) {
   });
 
   app.post('/api/products', async (req, res) => {
-    try {
-      const { text, metadata } = req.body;
-      const { randomUUID } = await import('crypto');
-      const id = randomUUID();
-      const result = await pool.query(
-        `INSERT INTO ${schema}.products (id, text, metadata)
-         VALUES ($1, $2, $3)
-         RETURNING id, text, metadata`,
-        [id, text, JSON.stringify(metadata)]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error('Error creating product:', error);
-      res.status(500).json({ error: 'Error creating product' });
-    }
+    // Endpoint deshabilitado - Los productos son de solo lectura
+    res.status(403).json({ error: 'Creating products is disabled' });
   });
 
   app.put('/api/products/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { text, metadata } = req.body;
-      const result = await pool.query(
-        `UPDATE ${schema}.products 
-         SET text = $1, metadata = $2
-         WHERE id = $3
-         RETURNING id, text, metadata`,
-        [text, JSON.stringify(metadata), id]
-      );
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error('Error updating product:', error);
-      res.status(500).json({ error: 'Error updating product' });
-    }
+    // Endpoint deshabilitado - Los productos son de solo lectura
+    res.status(403).json({ error: 'Updating products is disabled' });
   });
 
   app.delete('/api/products/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const result = await pool.query(
-        `DELETE FROM ${schema}.products WHERE id = $1 RETURNING id`,
-        [id]
-      );
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      res.status(500).json({ error: 'Error deleting product' });
-    }
+    // Endpoint deshabilitado - Los productos son de solo lectura
+    res.status(403).json({ error: 'Deleting products is disabled' });
   });
 
   // ========== ORDERS ========== 

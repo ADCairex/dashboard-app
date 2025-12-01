@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { apiClient } from '@/api/apiClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/Components/ui/button.jsx";
 import { Input } from "@/Components/ui/input.jsx";
-import { Plus, RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import ProductsTable from '../Components/products/Table';
-import ProductForm from '../Components/products/Form';
 
 export default function Products() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   const queryClient = useQueryClient();
@@ -18,55 +15,6 @@ export default function Products() {
     queryKey: ['products'],
     queryFn: () => apiClient.entities.Product.list('-created_date')
   });
-
-  const createProductMutation = useMutation({
-    mutationFn: (data) => apiClient.entities.Product.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      setIsModalOpen(false);
-      setEditingProduct(null);
-    }
-  });
-
-  const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }) => apiClient.entities.Product.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      setIsModalOpen(false);
-      setEditingProduct(null);
-    }
-  });
-
-  const deleteProductMutation = useMutation({
-    mutationFn: (id) => apiClient.entities.Product.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    }
-  });
-
-  const handleSave = async (data, id) => {
-    if (id) {
-      await updateProductMutation.mutateAsync({ id, data });
-    } else {
-      await createProductMutation.mutateAsync(data);
-    }
-  };
-
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setIsModalOpen(true);
-  };
-
-  const handleNew = () => {
-    setEditingProduct(null);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      await deleteProductMutation.mutateAsync(id);
-    }
-  };
 
   const filteredProducts = products.filter(product => {
     const metadata = typeof product.metadata === 'string' 
@@ -88,15 +36,8 @@ export default function Products() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Catálogo de Productos</h1>
-          <p className="text-slate-600">Gestiona tus productos</p>
+          <p className="text-slate-600">Visualiza tus productos</p>
         </div>
-        <Button
-          onClick={handleNew}
-          className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Nuevo Producto
-        </Button>
       </div>
 
       {/* Statistics */}
@@ -142,21 +83,10 @@ export default function Products() {
       ) : (
         <ProductsTable
           products={filteredProducts}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={null}
+          onDelete={null}
         />
       )}
-
-      {/* Form modal */}
-      <ProductForm
-        product={editingProduct}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingProduct(null);
-        }}
-        onSave={handleSave}
-      />
     </div>
   );
 }
