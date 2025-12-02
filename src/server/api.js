@@ -90,6 +90,7 @@ export function setupApiRoutes(app) {
         const result = await pool.query(
           `SELECT id, text, metadata FROM ${schema}.products`
         );
+        console.log("results", result.rows);
         res.json(result.rows);
       }
     } catch (error) {

@@ -173,21 +173,22 @@ export default function OrderDetail({ order, isOpen, onClose, onEdit, onDelete }
                 <p className="text-sm text-slate-500 text-center py-4">Cargando productos...</p>
               ) : products && products.length > 0 ? (
                 products.map((item, index) => {
+                  console.log(item)
                   const metadata = item.metadata || {};
 
                   return (
                     <div key={item.id || index} className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center">
                       <div>
                         <p className="font-medium text-slate-900">
-                          {metadata.titulo || item.text || 'Producto'}
+                          {metadata.Name || item.text || 'Producto'}
                         </p>
-                        {metadata.descripcion && (
+                        {metadata.Descripcion && (
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {metadata.descripcion}
+                            {metadata.Descripcion}
                           </p>
                         )}
                         <p className="text-sm text-slate-500 mt-1">
-                          Cantidad: {item.amount} × €{parseFloat(item.unit_price || 0).toFixed(2)}
+                          Cantidad: {item.amount} × €{parseFloat(item.metadata.Price || 0).toFixed(2)}
                         </p>
                       </div>
                       <p className="font-semibold text-slate-900">

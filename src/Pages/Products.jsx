@@ -17,6 +17,7 @@ export default function Products() {
   });
 
   const filteredProducts = products.filter(product => {
+    console.log(product);
     const metadata = typeof product.metadata === 'string' 
       ? JSON.parse(product.metadata) 
       : product.metadata || {};

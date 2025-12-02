@@ -18,6 +18,7 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {console.log(products)}
       {products.map((product) => {
         const metadata = typeof product.metadata === 'string' 
           ? JSON.parse(product.metadata) 
@@ -30,10 +31,10 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
           >
             {/* Imagen */}
             <div className="relative h-48 bg-slate-100 overflow-hidden">
-              {metadata.Multimedia && metadata.Multimedia.length > 0 && metadata.Multimedia[0].signedPath ? (
+              {metadata.Multimedia && metadata.Multimedia.length > 0 && metadata.Multimedia[0].path ? (
                 <img
-                  src={metadata.Multimedia[0].signedPath}
-                  alt={metadata.Name || product.text}
+                  src={metadata.Multimedia[0].path}
+                  alt={metadata.Name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
@@ -51,10 +52,10 @@ export default function ProductsTable({ products, onEdit, onDelete }) {
             {/* Contenido */}
             <div className="p-5">
               <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-1">
-                {metadata.Name || product.text}
+                {metadata.Name}
               </h3>
               <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[2.5rem]">
-                {metadata.Description || product.text || 'Sin descripción'}
+                {metadata.Description || 'Sin descripción'}
               </p>
               
               <div className="flex items-center justify-between">
