@@ -1,7 +1,8 @@
 // Cliente de API que se conecta a las rutas /api/* integradas en Vite
 class APIClient {
-  constructor(endpoint) {
+  constructor(endpoint, readOnly = false) {
     this.endpoint = endpoint;
+    this.readOnly = readOnly;
   }
 
   async list(orderBy = '-created_date') {
@@ -45,25 +46,75 @@ class APIClient {
   }
 
   async create(data) {
-    // Método deshabilitado para productos
-    throw new Error('Creating products is disabled');
+    if (this.readOnly) {
+      throw new Error(`Creating ${this.endpoint} is disabled`);
+    }
+    
+    try {
+      const response = await fetch(`/api${this.endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error al crear ${this.endpoint}:`, error);
+      throw error;
+    }
   }
 
   async update(id, data) {
-    // Método deshabilitado para productos
-    throw new Error('Updating products is disabled');
+    if (this.readOnly) {
+      throw new Error(`Updating ${this.endpoint} is disabled`);
+    }
+    
+    try {
+      const response = await fetch(`/api${this.endpoint}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error al actualizar ${this.endpoint}/${id}:`, error);
+      throw error;
+    }
   }
 
   async delete(id) {
-    // Método deshabilitado para productos
-    throw new Error('Deleting products is disabled');
+    if (this.readOnly) {
+      throw new Error(`Deleting ${this.endpoint} is disabled`);
+    }
+    
+    try {
+      const response = await fetch(`/api${this.endpoint}/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error al eliminar ${this.endpoint}/${id}:`, error);
+      throw error;
+    }
   }
 }
 
 // Cliente de API con endpoints configurados
 export const apiClient = {
   entities: {
-    Order: new APIClient('/orders'),
-    Product: new APIClient('/products'),
+    Order: new APIClient('/orders', false), // CRUD completo habilitado
+    Product: new APIClient('/products', true), // Solo lectura
   }
 };

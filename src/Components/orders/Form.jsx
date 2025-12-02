@@ -102,7 +102,7 @@ export default function OrderForm({ order, isOpen, onClose, onSave }) {
           const metadata = typeof product.metadata === 'string' 
             ? JSON.parse(product.metadata) 
             : product.metadata || {};
-          newItems[index].unit_price = parseFloat(metadata.precio || 0);
+          newItems[index].unit_price = parseFloat(metadata.Price || 0);
         }
       }
       
@@ -272,7 +272,7 @@ export default function OrderForm({ order, isOpen, onClose, onSave }) {
                                     : product.metadata || {};
                                   return (
                                     <SelectItem key={product.id} value={product.id}>
-                                      {prodMetadata.titulo || product.text} - €{parseFloat(prodMetadata.precio || 0).toFixed(2)}
+                                      {prodMetadata.Name || product.text} - €{parseFloat(prodMetadata.Price || 0).toFixed(2)}
                                     </SelectItem>
                                   );
                                 })}

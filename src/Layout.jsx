@@ -22,7 +22,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Store className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-slate-900">Mi Negocio</span>
+            <span className="text-lg font-semibold text-slate-900">{import.meta.env.VITE_APP_NAME || 'Mi Negocio'}</span>
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -60,7 +60,7 @@ export default function Layout({ children, currentPageName }) {
                 <Store className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Mi Negocio</h1>
+                <h1 className="text-xl font-bold text-slate-900">{import.meta.env.VITE_APP_NAME || 'Mi Negocio'}</h1>
                 <p className="text-xs text-slate-500 mt-0.5">Panel de Control</p>
               </div>
             </div>
