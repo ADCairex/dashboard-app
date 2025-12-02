@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    image: empresas_no_premium:latest
+    image: empresas-no-premium:latest
     networks:
       - network_public
     environment:
